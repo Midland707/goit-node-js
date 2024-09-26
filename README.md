@@ -1,36 +1,120 @@
-# node-js
+REST API
 
-CLI app.
+CONTACTS
+@ GET /api/contacts
+Authorization: "Bearer {{token}}".
+нічого не отримує
+викликає функцію listContacts для роботи з json-файлом contacts.json
+повертає масив всіх контактів в json-форматі зі статусом 200
 
-Commands for CLI app and result screenshots.
+@ GET /api/contacts/:id
+Authorization: "Bearer {{token}}".
+Не отримує body
+Отримує параметр id
+викликає функцію getById для роботи з json-файлом contacts.json
+якщо такий id є, повертає об'єкт контакту в json-форматі зі статусом 200
+якщо такого id немає, повертає json з ключем "message": "Not found" і статусом 404
 
-// Get list contacts
+@ POST /api/contacts
+Authorization: "Bearer {{token}}".
+Отримує body в форматі {name, email, phone} (усі поля обов'язкові)
+Якщо в body немає якихось обов'язкових полів, повертає json з ключем {"message": "missing required name field"} і статусом 400
+Якщо з body все добре, додає унікальний ідентифікатор в об'єкт контакту
+Викликає функцію addContact(body) для збереження контакту в файлі contacts.json
+За результатом роботи функції повертає об'єкт з доданим id {id, name, email, phone} і статусом 201
 
-node index.js --action="list"
+@ DELETE /api/contacts/:id
+Authorization: "Bearer {{token}}".
+Не отримує body
+Отримує параметр id
+Викликає функцію removeContact для роботи з json-файлом contacts.json
+якщо такий id є, повертає json формату {"message": "contact deleted"} і статусом 200
+якщо такого id немає, повертає json з ключем "message": "Not found" і статусом 404
 
-https://prnt.sc/fznh2RFhq7sP
+@ PUT /api/contacts/:id
+Authorization: "Bearer {{token}}".
+Отримує параметр id
+Отримує body в json-форматі c оновленням будь-яких полів name, email и phone
+Якщо body немає, повертає json з ключем {"message": "missing fields"} і статусом 400
+Якщо з body всі добре, викликає функцію updateContact(contactId, body). (Напиши її) для поновлення контакту в файлі contacts.json
+За результатом роботи функції повертає оновлений об'єкт контакту і статусом 200. В іншому випадку, повертає json з ключем "message": "Not found" і статусом 404
 
+@ PATCH / api / contacts /: contactId / favorite
+Authorization: "Bearer {{token}}".
+Отримує параметр contactId
+Отримує body в json-форматі c оновленням поля favorite
+Якщо body немає, повертає json з ключем {"message": "missing field favorite"}і статусом 400
+Якщо з body все добре, викликає функцію updateStatusContact (contactId, body) (напиши її) для поновлення контакту в базі
+За результатом роботи функції повертає оновлений об'єкт контакту і статусом 200. В іншому випадку, повертає json з ключем " message ":" Not found " і статусом 404
 
-// Get contact by id
+USERS
+Content-Type: application/json
+@ POST /users/register - Реєстрація користувача
+RequestBody: {
+  "email": xxxxx@example.com",
+  "password": "***********"
+}
+Registration validation error = Status: 400 Bad Request. ResponseBody: <Помилка від Joi або іншої бібліотеки валідації>.
+Registration conflict error = Status: 409 Conflict. ResponseBody: {"message": "Email in use"}.
+Registration success response = Status: 201 Created
+ResponseBody: {
+  "user": {
+    "email": "xxxxx@example.com",
+    "subscription": "starter"
+  }
+}
 
-node index.js --action="get" --id 05olLMgyVQdWRwgKfg5J6
+@ POST /users/login - Авторизація користувача.
+Registration validation error = Status: 400 Bad Request. ResponseBody: <Помилка від Joi або іншої бібліотеки валідації>.
+Login auth error = Status: 401 Unauthorized. ResponseBody: {"message": "Email or password is wrong"}.
+Login success response = Status: 200 OK. 
+ResponseBody: {
+  "token": "exampletoken",
+  "user": {
+    "email": "xxxxx@example.com",
+    "subscription": "starter"
+  }
+}
 
-https://prnt.sc/-3aGhYIXLyQR
+@ POST /users/logout - Вихід користувача
+Logout request = Authorization: "Bearer {{token}}".
+Logout unauthorized error = Status: 401 Unauthorized. ResponseBody: {"message": "Not authorized"}.
+Logout success response = Status: 204 No Content.
 
+@ GET /users/current
+Current user request = Authorization: "Bearer {{token}}".
+Logout unauthorized error = Status: 401 Unauthorized. ResponseBody: {"message": "Not authorized"}.
+Current user success response = Status: 200 OK. 
+ResponseBody: {
+  "email": "example@example.com",
+  "subscription": "starter"
+}
 
-// Add contact to contactList
+@ GET /contacts?page=1&limit=20 - Пагінація для колекції контактів
 
-node index.js --action="add" --name Mango --email mango@gmail.com --phone 322-22-22
+@ GET /contacts?favorite=true - Фільтрація контактів по полю "favorite".
 
-https://prnt.sc/mxtRO4o1eU7E
+@ PATCH /users - Оновлення підписки (subscription) користувача.
+Підписка повинна мати одне з наступних значень ['starter', 'pro', 'business'].
 
-// Remove contact from contactList by id
+@ PATCH /users/avatars - Оновлення картинки аватара користувача.
+Content-Type: multipart/form-data
+Authorization: "Bearer {{token}}"
+RequestBody: завантажений файл
 
-node index.js --action="remove" --id qdggE76Jtbfd9eWJHrssH
+Status: 200 OK
+ResponseBody: {
+  "avatarURL": "тут буде посилання на зображення"
+}
 
-https://prnt.sc/_DBA8GbcmvOJ
+EXPRESS.STATIC
+http://locahost:<порт>/avatars/<ім'я файлу з розширенням>
 
+RUN
+npm start — старт сервера в режимі production
 
-// Result after run all comands in CLI
+npm run start:dev — старт сервера в режимі розробки (development)
 
-https://prnt.sc/H4BdQ6GgOwoI
+npm run lint — запустити виконання перевірки коду з eslint, необхідно виконувати перед кожним PR та виправляти всі помилки лінтера
+
+npm lint:fix — та ж перевірка лінтера, але з автоматичними виправленнями простих помилок
